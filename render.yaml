@@ -1,0 +1,59 @@
+# Render Blueprint — Backend API + PostgreSQL Database
+# https://docs.render.com/blueprint-spec
+#
+# This file lives in the ese-backend repository and provisions:
+#   1. A free-tier PostgreSQL database
+#   2. The Django REST API web service
+#
+# Deploy via Blueprint:
+#   1. Push this repo to GitHub (https://github.com/MuhsinADA/ese-backend.git)
+#   2. Go to https://dashboard.render.com/select-repo?type=blueprint
+#   3. Select the ese-backend repository and confirm
+#
+# After deployment, set the env vars marked sync: false in the Render dashboard:
+#   - CORS_ALLOWED_ORIGINS  → https://<frontend-service>.onrender.com
+#   - FRONTEND_BASE_URL     → https://<frontend-service>.onrender.com
+#   - SENDGRID_API_KEY      → your SendGrid API key
+#   - CLOUDINARY_CLOUD_NAME → your Cloudinary cloud name
+#   - CLOUDINARY_API_KEY    → your Cloudinary API key
+#   - CLOUDINARY_API_SECRET → your Cloudinary API secret
+
+databases:
+  - name: ese-tasks-db
+    plan: free
+    databaseName: ese_tasks
+    user: ese_user
+
+services:
+  - type: web
+    name: ese-task-api
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ese-tasks-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      # ── Set these manually after first deploy ──
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: FRONTEND_BASE_URL
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
